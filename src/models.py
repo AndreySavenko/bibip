@@ -4,6 +4,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+import json
+
 
 class CarStatus(StrEnum):
     available = "available"
@@ -22,6 +24,27 @@ class Car(BaseModel):
     def index(self) -> str:
         return self.vin
 
+    def return_params_as_list(self) -> list[str]:
+        """ Мое. Возвращает все параметры списком """
+        lst: list[str] = list()
+        lst.append(self.vin)
+        lst.append(self.model)
+        lst.append(self.price)
+        # Приведем дату в текст с нужным форматированием
+        lst.append(datetime.strftime(self.date_start, '%Y-%m-%d'))
+        lst.append(self.status)
+        return lst
+
+    def return_params_as_json(self) -> json:
+        dct = {
+            'vin': str(self.vin),
+            'model': self.model,
+            'price': str(self.price),
+            'date_start': datetime.strftime(self.date_start, '%Y-%m-%d'),
+            'status': str(self.status)
+        }
+        return json.dumps(dct)
+
 
 class Model(BaseModel):
     id: int
@@ -31,6 +54,21 @@ class Model(BaseModel):
     def index(self) -> str:
         return str(self.id)
 
+    def return_params_as_list(self) -> list[str]:
+        """ Мое. Возвращает все параметры списком """
+        lst: list[str] = list()
+        lst.append(self.id)
+        lst.append(self.name)
+        lst.append(self.brand)
+        return lst
+
+    def return_params_as_json(self) -> json:
+        dct = {
+            'id': self.id,
+            'name': self.name,
+            'brand': self.brand,
+        }
+        return json.dumps(dct)
 
 class Sale(BaseModel):
     sales_number: str

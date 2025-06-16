@@ -1,5 +1,9 @@
 from models import Car, CarFullInfo, CarStatus, Model, ModelSaleStats, Sale
+from pathlib import Path
+from datetime import datetime as dt
+from decimal import Decimal 
 
+ROW_LENTS = 150  # длина строки для базы (без учета символа \n)
 
 class CarService:
     def __init__(self, root_directory_path: str) -> None:
