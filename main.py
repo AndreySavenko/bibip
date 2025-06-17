@@ -4,7 +4,7 @@
 from pathlib import Path
 import models
 import bibip_car_service
-from models import write_row_in_file, read_row_in_file, write_file
+from models import init_car, init_model
 from datetime import datetime as dt
 from decimal import Decimal
 
@@ -29,12 +29,12 @@ def read_file(path: str, nam: str):  # -> list:
         # print(lines)  # , type(lines))
     return lines
 
-
+""" 
 def init_car(text: str, delimiter: str) -> models.Car:
-    """ Функция возвращает объект models.Car.
-    Функция принимает строку с параметрами, разделенными delimiter,
-    распаковываем строку в список, приводим параметры к нужным типам.
-    """
+    # Функция возвращает объект models.Car.
+    # Функция принимает строку с параметрами, разделенными delimiter,
+    # распаковываем строку в список, приводим параметры к нужным типам.
+    
     param = str.split(text, delimiter)
     dat = dt.strptime(param[3], '%Y-%m-%d')
     # print(dat, type(dat))
@@ -55,14 +55,14 @@ def init_car(text: str, delimiter: str) -> models.Car:
 
 
 def init_model(text: str, delimiter: str) -> models.Model:
-    """ Функция возвращает объект models.Model.
-    Функция принимает строку с параметрами, разделенными delimiter,
-    распаковываем строку в список, приводим параметры к нужным типам.
-    """
+    # Функция возвращает объект models.Model.
+    # Функция принимает строку с параметрами, разделенными delimiter,
+    # распаковываем строку в список, приводим параметры к нужным типам.
+
     param = str.split(text, delimiter)
     model = models.Model(id=int(param[0]), name=param[1], brand=param[2])
     return model
-
+ """
 
 def init_raw_files():
     path = 'src'
@@ -85,7 +85,7 @@ def init_raw_files():
         # пример инициализации модели из сырого файла
         model = init_model(fm[i+1].strip('\n'), '\t')
         bibip.add_model(model)
-    
+
     print("\nСырые файлы обработаны")
 
 
@@ -93,4 +93,5 @@ if __name__ == '__main__':
     # path = 'src'  # папка для сохранения файлов
 
     # Читаем сырые файлы
-    init_raw_files()
+    # init_raw_files()
+    

@@ -135,6 +135,24 @@ def create_ptn_path()
     # setx PYTHONPATH "%PYTHONPATH%;D:\Dev\bibip\src"   - постоянно
     return None
 
+def sort_dict_exp():
+    my_dict = {'a': 5, 'b': 10, 'c': 3, 'd': 8, 'e': 1}
+
+    # 1) Сортировка словаря по значениям в порядке убывания
+    sorted_dict = dict(sorted(my_dict.items(), key=lambda item: item[1], reverse=True))
+
+    # 2) Сохранение первых трех элементов в список кортежей
+    top_three = list(sorted_dict.items())[:3]
+
+    print("Отсортированный словарь:", sorted_dict)
+    print("Топ-3 элементов:", top_three)
+
+
+    top_three2 = sorted(my_dict.items(), key=lambda item: item[1], reverse=True)[:3]
+
+    print("Топ-3 элементов:", top_three2)  # [('b', 10), ('d', 8), ('a', 5)]    
+    
+
 if __name__ == '__main__':
     # print(sys.path)
     # sys.path.append(r"D:\Dev\bibip\src")
