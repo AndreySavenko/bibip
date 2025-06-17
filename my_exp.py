@@ -3,9 +3,10 @@
 # import os
 from pathlib import Path
 import models as bibip
+from models import write_row_in_file, read_row_in_file, write_file
 from datetime import datetime as dt
-from decimal import Decimal 
-import sys
+from decimal import Decimal
+
 
 ROW_LENTS = 150  # длина строки для базы (без учета символа \n)
 
@@ -21,69 +22,6 @@ def read_file(path: str, nam: str):  # -> list:
     return lines
 
 
-def read_row_in_file(path: str, nam: str, num_row: int,
-                     row_len: int = ROW_LENTS) -> str:
-    """ Читаем конкретную строку в файле
-     Должна быть реализована константная длина строк"""
-    # Нумерация строк файла начинается с 1 (как id в БД)
-    with open(f'{path.rstrip('/')}/{nam}', 'r') as f:
-    # with open(f'{path.rstrip('/')}/{nam}', 'r', encoding='utf-8') as f:
-        #      'r', encoding='utf-8') as f:
-        offset = (num_row - 1) * (row_len + 1)
-        f.seek(offset)  # +1 - учет символа \n
-        text = f.read(row_len)
-        text = text.strip(' \n')  # получаем строку без \n и ' '
-        # сначала хотел применить rstrip, но в начале строки откуда-то
-        # появляется \n, хотя я вроде правильно читаю (с начала строк)
-    return text
-
-
-def write_row_in_file(path: str, nam: str, text: str, num_row: int,
-                      row_len: int = ROW_LENTS, RW: bool = False) -> str:
-    """ Пишем конкретную строку в файле
-      Должна быть реализована константная длина строк"""
-    # Нумерация строк файла начинается с 1 (как id в БД)
-    p = Path(path)
-    p.mkdir(exist_ok=True)  # создадим папку, если нету
-    fullpath = f'{path.rstrip('/')}/{nam}'
-    p = Path(fullpath)
-    isfile = p.is_file()
-    if isfile:
-        mode = 'r+'
-        offset = (num_row - 1) * (row_len + 1)  # +1 - учет символа \n
-    else:
-        mode = 'w'
-
-    if len(text) <= row_len:
-        text = text.ljust(row_len)
-    else:
-        raise Exception(f'Длина строки больше ограничения\n{text}')
-    # print(len(text), text)
-    if not RW:  # если не перезаписываем строку, то добавим каретку переноса
-        text = text + '\n'
-
-    # with open(fullpath, mode, encoding='utf-8') as f:  # mode = f(isfile)
-    with open(fullpath, mode) as f:  # mode = f(isfile)
-        if isfile:
-            f.seek(offset)
-        f.write(text)
-
-
-def write_file(path: str, nam: str, text: str, mode: str = 'w+',
-               fix_len: bool = True, row_len: int = ROW_LENTS):
-    # print('Начинаем write_file:\n')
-    p = Path(path)
-    p.mkdir(exist_ok=True)  # создадим папку, если нету
-    if fix_len:
-        if len(text) <= row_len:
-            text = text.ljust(row_len)
-        else:
-            raise Exception(f'Длина строки больше ограничения\n{text}')
-    with open(f'{path.rstrip('/')}/{nam}', mode, encoding='utf-8') as f:
-    # with open(f'{path.rstrip('/')}/{nam}', mode) as f:
-        # print(lines)  # , type(lines))
-        f.write(text + '\n')
-        # return lines
 
 
 def init_car(text: str, delimiter: str) -> bibip.Car:
@@ -150,13 +88,14 @@ def init_raw_files():
         cars.append(car)  # добавляем в список очередной элемент
 #        lst: list[str] = list() # создаем список
         lst = car.return_params_as_list()
-        write_file(path, 'cars_list2.txt', str.join('; ', map(str, lst)), 'a', True, ROW_LENTS)
+        # write_file(path, 'cars_list2.txt', str.join('; ', map(str, lst)), 'a', True, ROW_LENTS)
         write_row_in_file(path, 'cars_list.txt', str.join('; ', map(str, lst)),
                           i+1, ROW_LENTS)  # i+1 - чтобы нуме-я строк была с 1
 #        print(str.join('; ', map(str, lst)))
         json_string = car.return_params_as_json()
 #       print(json_string)  # , type(json_string))
-        write_file(path, 'cars_json.txt', json_string, 'a')
+        write_file(path, 'cars_json2.txt', json_string, 'a')
+        write_row_in_file(path, 'cars_json.txt', json_string, i+1, ROW_LENTS)
 
     # Читаем весь сырой файл с машинами
     nam = 'raw_models.txt'
@@ -170,20 +109,35 @@ def init_raw_files():
         models.append(model)
         lst2 = model.return_params_as_list()
         # print(str.join('; ', map(str, lst2)))
-        write_file(path, 'models_list2.txt', str.join('; ', map(str, lst2)), 'a', True, ROW_LENTS)
+        # write_file(path, 'models_list2.txt', str.join('; ', map(str, lst2)), 'a', True, ROW_LENTS)
         write_row_in_file(path, 'models_list.txt', str.join('; ', map(str, lst2)), i+1, ROW_LENTS)
         json_string = model.return_params_as_json()
         # text: str = str(json_string)
         # print(json_string)
         # print(text, type(text))
-        write_file(path, 'models_json.txt', json_string, 'a')
+        write_file(path, 'models_json2.txt', json_string, 'a')
+        write_row_in_file(path, 'models_json.txt', json_string, i+1, ROW_LENTS)
     
     print("\nСырые файлы обработаны")
 
 
+def create_ptn_path()
+    # import sys
+
+    # print(sys.path)
+    # sys.path.append(r"D:\Dev\bibip\src")
+    # print(sys.path)
+    # sys.path.append('D:\Dev\bibip\src')    
+
+    # для консоли
+    # python -c "import sys; print(sys.path)" -- вывести pythonpath 
+    # set PYTHONPATH=%PYTHONPATH%;D:\Dev\bibip\src   - временно
+    # setx PYTHONPATH "%PYTHONPATH%;D:\Dev\bibip\src"   - постоянно
+    return None
+
 if __name__ == '__main__':
-    print(sys.path)
-    # sys.path.append(r"D:\Dev\de-project-bibip\src")
+    # print(sys.path)
+    # sys.path.append(r"D:\Dev\bibip\src")
     # sys.path.append('D:\Dev\bibip\src')    
     path = 'src'  # папка для сохранения файлов
 
@@ -215,6 +169,7 @@ if __name__ == '__main__':
     print(f)
     """
     
+    """
     text = read_row_in_file(path, 'cars_list.txt', 3, ROW_LENTS)
     print(text)
 
@@ -230,15 +185,16 @@ if __name__ == '__main__':
 
     text = read_row_in_file(path, 'cars_list.txt', 5, ROW_LENTS)
     print(text)
-
-
+    """
+    """
     text = read_row_in_file(path, 'models_list.txt', 3, ROW_LENTS)
     print(text)
-
+    
+    
     text = 'НОВАЯ СТРОКА в моделях ееее'
     # text = text.ljust(ROW_LENTS)
     write_row_in_file(path, 'models_list.txt', text, 3, ROW_LENTS, True)
-
+  
     text = read_row_in_file(path, 'models_list.txt', 3, ROW_LENTS)
     print(text)
 
@@ -247,3 +203,22 @@ if __name__ == '__main__':
 
     text = read_row_in_file(path, 'models_list.txt', 5, ROW_LENTS)
     print(text)
+    """
+
+    """
+    text = read_row_in_file(path, 'cars_json.txt', 3, ROW_LENTS)
+    print(text)
+
+    text = 'НОВАЯ СТРОКА__________ух'
+    # text = text.ljust(ROW_LENTS)
+    write_row_in_file(path, 'cars_json.txt', text, 3, ROW_LENTS, True)
+
+    text = read_row_in_file(path, 'cars_json.txt', 3, ROW_LENTS)
+    print(text)
+
+    text = read_row_in_file(path, 'cars_json.txt', 4, ROW_LENTS)
+    print(text)
+
+    text = read_row_in_file(path, 'cars_json.txt', 5, ROW_LENTS)
+    print(text)
+    """
