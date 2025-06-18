@@ -1,12 +1,8 @@
-
-# import json
-# import os
 from pathlib import Path
-import models
 import bibip_car_service
 from models import init_car, init_model
-from datetime import datetime as dt
-from decimal import Decimal
+# from datetime import datetime as dt
+# from decimal import Decimal
 
 
 # ROW_LENTS = 150  # длина строки для базы (без учета символа \n)
@@ -94,4 +90,4 @@ if __name__ == '__main__':
 
     # Читаем сырые файлы
     # init_raw_files()
-    
+

@@ -1,7 +1,6 @@
 from models import Car, CarFullInfo, CarStatus, Model, ModelSaleStats, Sale
-from models import write_row_in_file, write_file, read_row_in_file, init_car, init_model, init_sale
+from models import init_car, init_model, init_sale
 from pathlib import Path
-from datetime import datetime as dt
 from decimal import Decimal
 
 
@@ -13,6 +12,8 @@ MODELS_INDEX_FNAME: str = 'models_index.txt'
 SALES_FNAME: str = 'sales.txt'
 SALES_INDEX_FNAME: str = 'sales_index.txt'
 DELETED_STATUS: str = 'is_deleted'
+ROW_LENTS = 150  # длина строки для базы (без учета символа \n)
+
 
 class CarService:
     def __init__(self, root_directory_path: str) -> None:
@@ -25,20 +26,20 @@ class CarService:
         index_lst = read_index_file(path, MODELS_INDEX_FNAME)
         cnt = len(index_lst)  # число записей. Будет 0, если файла нет.
         # добавляем в индекс новые строки
-        # index_lst.append(model.brand + ' ' + model.name + DELIMITER + str(cnt + 1))
         index_lst.append(str(cnt + 1) + DELIMITER + str(cnt + 1))
         # пишем в файл базы, как строку с разделителями
         lst = model.return_params_as_list()  # возвращаем параметры списком
-        write_row_in_file(path, MODELS_FNAME, str.join(DELIMITER, map(str, lst)), cnt + 1)
+        write_row_in_file(path, MODELS_FNAME,
+                          str.join(DELIMITER, map(str, lst)), cnt + 1)
 
-        # пишем в файл базы, как строку json (или словарь) - отказался от этого варианта
+        # пишем в файл базы, как строку json (или словарь) - отказался
         # json_string = model.return_params_as_json()
         # write_row_in_file(path, 'models_json.txt', json_string, cnt+1)
 
         # сортируем обновленный Индекс
-        list.sort(index_lst)  # не имеет смысл сортировать реальный индекс для моделей
+        list.sort(index_lst)
         # перезаписываем файл Индекс
-        text = str.join('\n', index_lst)  # делаем многострочный текст из списка
+        text = str.join('\n', index_lst)  # делаем многострочный текст
         write_file(path, MODELS_INDEX_FNAME, text, fix_len=False)
         # raise NotImplementedError
         return model
@@ -48,7 +49,7 @@ class CarService:
         path = self.root_directory_path.rstrip('/')
         # читаем файл Индекс, определяем число записей
         index_lst = read_index_file(path, CARS_INDEX_FNAME)
-        cnt = len(index_lst)  # число записей. Будет 0, если файла нет.        
+        cnt = len(index_lst)  # число записей. Будет 0, если файла нет.
         # добавляем в индекс новые строки
         index_lst.append(car.vin + DELIMITER + str(cnt + 1))
         # пишем в файл базы, как строку с разделителями
@@ -63,7 +64,7 @@ class CarService:
         # сортируем обновленный Индекс
         list.sort(index_lst)
         # перезаписываем файл Индекс
-        text = str.join('\n', index_lst)  # делаем многострочный текст из списка
+        text = str.join('\n', index_lst)  # делаем многострочный текст
         write_file(path, CARS_INDEX_FNAME, text, fix_len=False)
         # raise NotImplementedError
         return car
@@ -75,15 +76,17 @@ class CarService:
         index_lst = read_index_file(path, SALES_INDEX_FNAME)
         cnt = len(index_lst)  # число записей. Будет 0, если файла нет.
         # добавляем в индекс новые строки
-        index_lst.append(sale.sales_number + DELIMITER + str(cnt + 1))  # + DELIMITER + 'OK')
+        index_lst.append(sale.sales_number + DELIMITER + str(cnt + 1))
         # пишем в файл базы, как строку с разделителями
         lst = sale.return_params_as_list()
-        write_row_in_file(path, SALES_FNAME, str.join(DELIMITER, map(str, lst)), cnt+1)
+        write_row_in_file(path, SALES_FNAME,
+                          str.join(DELIMITER, map(str, lst)), cnt+1)
 
         # сортируем обновленный Индекс
         list.sort(index_lst)
         # перезаписываем файл Индекс
-        text = str.join('\n', index_lst)  # делаем многострочный текст из списка
+        # делаем многострочный текст из списка
+        text = str.join('\n', index_lst)
         write_file(path, SALES_INDEX_FNAME, text, fix_len=False)
 
         # Теперь обновляем данные по авто.
@@ -94,21 +97,20 @@ class CarService:
         if cnt == 0:
             raise Exception("Нельзя продать машину, если вообще нет машин")
         for i in range(len(index_lst)):
-            fnd = str(index_lst[i]).find(sale.car_vin)
-            if str(index_lst[i]).find(sale.car_vin) >= 0: #is not None:
+            if str(index_lst[i]).find(sale.car_vin) >= 0:
                 # парсим подстроку, определяем номер записи в базе
                 car_number = int(index_lst[i].split(DELIMITER)[1])
                 break
 
-        # Формируем объект car
-        text = read_row_in_file(path, CARS_FNAME, car_number) # читаем строку из базы
-        car = init_car(text, DELIMITER)
+        # Формируем объект car. читаем строку из базы
+        text = read_row_in_file(path, CARS_FNAME, car_number)
+        car = init_car(text, DELIMITER)  # получаем объект Car
         car.status = CarStatus.sold  # Обновляем статус авто в модели
         lst = car.return_params_as_list()  # получаем параметры списком
         # пишем обновленную строку в базу (перезаписываем)
         write_row_in_file(path, CARS_FNAME, str.join(DELIMITER, map(str, lst)),
-                          car_number, RW=True)  # i+1 - чтобы нуме-я строк была с 1
-        return car  # возвращем объект car (так было в шаблоне, пока не понял зачем...)
+                          car_number, RW=True)
+        return car  # возвращем объект car (так было в шаблоне)
 
     # Задание 3. Доступные к продаже
     def get_cars(self, status: CarStatus) -> list[Car]:
@@ -121,7 +123,7 @@ class CarService:
         cars_lst = list()
         # далее построчно читаем основной файл базы, Отбирая нужные записи
         for i in range(cnt):
-            text = read_row_in_file(path, CARS_FNAME, i+1)  # читаем строку из базы
+            text = read_row_in_file(path, CARS_FNAME, i+1)  # читаем базу
             car = init_car(text, DELIMITER)  # получаем объект Car из строки
             if car.status == CarStatus.available:
                 cars_lst.append(car)  # сохраняем в выборку, если нужный статус
@@ -130,10 +132,9 @@ class CarService:
 
     # Задание 4. Детальная информация
     def get_car_info(self, vin: str) -> CarFullInfo | None:
-        path = self.root_directory_path.rstrip('/')        
+        path = self.root_directory_path.rstrip('/')
         # читаем сначала файл индекс авто, определяем число строк
         index_cars = read_index_file(path, CARS_INDEX_FNAME)
-        cnt_cars = len(index_cars)
         break_out_flag = False  # флаг выхода из верхнего цикла
         not_find = True
         # for num_car in range(cnt_cars):
@@ -147,7 +148,8 @@ class CarService:
                 for model_index_item in index_models:  # range(cnt_models):
                     model_index, model_num = model_index_item.split(DELIMITER)
                     if car.model == int(model_index):
-                        text = read_row_in_file(path, MODELS_FNAME, int(model_num))
+                        text = read_row_in_file(path, MODELS_FNAME,
+                                                int(model_num))
                         model = init_model(text, DELIMITER)  # получаем Model
                         break_out_flag = True  # для выхода из внешенего цикла
                         break
@@ -182,7 +184,6 @@ class CarService:
                            sales_date=sales_date, sales_cost=sales_cost)
         # raise NotImplementedError
 
-
     # Задание 5. Обновление ключевого поля
     def update_vin(self, vin: str, new_vin: str) -> Car:
         path = self.root_directory_path.rstrip('/')
@@ -199,39 +200,36 @@ class CarService:
         car.vin = new_vin
         # обновляем строку в базе
         lst = car.return_params_as_list()
-        write_row_in_file(path, CARS_FNAME, str.join(DELIMITER, map(str, lst)), num_row, RW = True)
+        write_row_in_file(path, CARS_FNAME,
+                          str.join(DELIMITER, map(str, lst)), num_row, RW=True)
         # обновляем вин в индексе
         index_cars[num_car] = car.vin + DELIMITER + str(num_row)
         list.sort(index_cars)  # сортируем индекс в памяти
         # перезаписываем файл Индекс полностью
-        text = str.join('\n', index_cars)  # делаем многострочный текст из списка
+        text = str.join('\n', index_cars)  # делаем многострочник
         write_file(path, CARS_INDEX_FNAME, text, fix_len=False)
         # raise NotImplementedError
         return car
 
     # Задание 6. Удаление продажи
     def revert_sale(self, sales_number: str) -> Car:
-        path = self.root_directory_path.rstrip('/')  
+        path = self.root_directory_path.rstrip('/')
         # читаем сначала файл индекс, определяем число строк
         index_sales = read_index_file(path, SALES_INDEX_FNAME)
         cnt_sales = len(index_sales)
         for num in range(cnt_sales):
             sale_index, sale_row = index_sales[num].split(DELIMITER)
             if sales_number == sale_index:
-                # index_sales[num] = sale_index + DELIMITER + sale_row  # + DELIMITER + DELETED_STATUS
                 break
-        # list.sort(index_sales) # сортировать индекс не нужно, ключи не обновились
-        # т.к. именно в индексе я не выдерживал равное число символов в строке, 
-        # то перезапишу весь файл, а не конкретную строку
-        #text = str.join('\n', index_sales)  # делаем многострочный текст из списка
-        # write_file(path, SALES_INDEX_FNAME, text, fix_len=False)
-        
+
         # инициализируем продажу, чтобы знать vin авто
-        text = read_row_in_file(path, SALES_FNAME, int(sale_row))  # читаем базу
+        text = read_row_in_file(path, SALES_FNAME, int(sale_row))
         sale = init_sale(text, DELIMITER)
         sale.status = DELETED_STATUS
         lst = sale.return_params_as_list()
-        write_row_in_file(path, SALES_FNAME, str.join(DELIMITER, map(str, lst)), int(sale_row), RW = True)
+        write_row_in_file(path, SALES_FNAME,
+                          str.join(DELIMITER, map(str, lst)),
+                          int(sale_row), RW=True)
 
         # теперь найдем авто, обновим статус
         index_cars = read_index_file(path, CARS_INDEX_FNAME)
@@ -241,22 +239,23 @@ class CarService:
             if sale.car_vin == car_index:
                 break  # сделали дело, выходим из цикла
 
-        text = read_row_in_file(path, CARS_FNAME, int(car_num))  # читаем базу авто
+        text = read_row_in_file(path, CARS_FNAME, int(car_num))
         car = init_car(text, DELIMITER)  # получаем объект Car из строки
         if car.status != CarStatus.sold:
-            raise Exception("Эта машина должна была быть помечена, как удаленная")
+            raise Exception("Это авто должно быть помечено, как удаленное")
         car.status = CarStatus.available  # ставим правильный статус
         # обновляем строку в базе
         lst = car.return_params_as_list()  # получаем параметры объекта списком
         # перезаписываем строку в базе.
-        write_row_in_file(path, CARS_FNAME, str.join(DELIMITER, map(str, lst)), int(car_num), RW = True)
+        write_row_in_file(path, CARS_FNAME,
+                          str.join(DELIMITER, map(str, lst)),
+                          int(car_num), RW=True)
         return car
-
 
     # Задание 7. Самые продаваемые модели
     def top_models_by_sales(self) -> list[ModelSaleStats]:
         # пытаюсь реализовать шаги из подсказки
-        path = self.root_directory_path.rstrip('/')  
+        path = self.root_directory_path.rstrip('/')
         # читаю все действительные (неудаленные) продажи
         id_cnt_dct: dict[int, int] = dict()  # dict для пары model_id:count
         id_cost_dct: dict[int, Decimal] = dict()  # dict для пары mode_id:cost
@@ -266,46 +265,39 @@ class CarService:
         # читаю индексы продаж, определяю число продаж
         index_sales = read_index_file(path, SALES_INDEX_FNAME)
         cnt_sales = len(index_sales)
-        for sale_index in range(cnt_sales):
-            id, sale_num = index_sales[sale_index].split(DELIMITER)
-            
-            # тут надо переделать!!!!!! статус теперь не тут!
-            
-            if status != DELETED_STATUS:
-                # читаю продажи
-                text = read_row_in_file(path, SALES_FNAME, int(sale_num))
-                sale = init_sale(text, DELIMITER)                     
-                # vin = sale.car_vin  # фиксирую vin
-                # ищу по vin номер авто
-                index_cars = read_index_file(path, CARS_INDEX_FNAME)
-                cnt_cars = len(index_cars)
+        # читаю индексы авто, определяю число авто
+        index_cars = read_index_file(path, CARS_INDEX_FNAME)
+        cnt_cars = len(index_cars)
+
+        # во внешнем цикле по продажам читаю продажи.
+        for sale_num in range(cnt_sales):
+            text = read_row_in_file(path, SALES_FNAME, int(sale_num)+1)
+            sale = init_sale(text, DELIMITER)
+            if sale.status != DELETED_STATUS:   # не обрабатываю удаленные
+                # во вложенном цикле ищу по vin номер авто
                 for car_index in range(cnt_cars):
-                    vin, car_num = index_sales[car_index].split(DELIMITER)
+                    vin, car_num = index_cars[car_index].split(DELIMITER)
                     if sale.car_vin == vin:
-                        break
+                        break  # нашли авто, прерываем цикл
+                # читаем авто из базы
                 text = read_row_in_file(path, CARS_FNAME, int(car_num))
                 car = init_car(text, DELIMITER)  # получаем объект Car
-                #  model_id = car.model  # запомнили id модели
-                #  price = car.price  # запомнили цену авто
                 #  пишем в словари
                 if car.model in id_cnt_dct:  # другой словарь можно не чекать
-                    id_cnt_dct[car.model] = int(id_cnt_dct[car.model] + 1)
+                    id_cnt_dct[car.model] = id_cnt_dct[car.model] + 1
                     if car.price > id_cost_dct[car.model]:
                         #  у авто одинаковых моделей может быть разная цена.
                         #  запомним самый дорогой
-                        # (хотя может быть, лучше было самый дешевый..)
                         id_cost_dct[car.model] = car.price
                 else:  # добавляем новый id в словарь
                     id_cnt_dct[car.model] = 1
                     id_cost_dct[car.model] = car.price
-        
+
         #  сортируем словарь (подсказка).
         #  Только сейчас узнал, что такое возможно в python...
         #  мы такое не проходили ) нас таким странным вещам не учили) ну ладно.
         top_three = sorted(id_cnt_dct.items(), key=lambda item: item[1],
                            reverse=True)[:3]
-        # Эту строку выдал DeepSeek. Без него я чуть не сдался.
-        # Восхищен этим однострочником. Как красив и многогранен Python...
 
         # Итак, окончание. Итерируем полученный список, превращаем в объекты
         result: list[ModelSaleStats] = list()
@@ -317,15 +309,15 @@ class CarService:
                 if item[0] == int(model_id):
                     text = read_row_in_file(path, MODELS_FNAME, int(model_num))
                     model = init_model(text, DELIMITER)  # генерим объект Model
-                    price = Decimal(id_cost_dct[model.id])
+                    # price = Decimal(id_cost_dct[model.id]) - не понадобилось
                     sale_stat_obj = ModelSaleStats(car_model_name=model.name,
                                                    brand=model.brand,
-                                                   sales_number=int(item[1]),
-                                                   price=price)
+                                                   sales_number=int(item[1]))
                     result.append(sale_stat_obj)
                     break
         # raise NotImplementedError
         return result
+
 
 def read_index_file(path: str, nam: str) -> list[str]:
     fullpath = f'{path}/{nam}'
@@ -339,4 +331,67 @@ def read_index_file(path: str, nam: str) -> list[str]:
     return index_lst
 
 
+def write_row_in_file(path: str, nam: str, text: str, num_row: int,
+                      row_len: int = ROW_LENTS, RW: bool = False):
+    """ Пишем конкретную строку в файле
+      Должна быть реализована константная длина строк"""
+    # Нумерация строк файла начинается с 1 (как id в БД)
+    p = Path(path)
+    p.mkdir(exist_ok=True)  # создадим папку, если нету
+    fullpath = f'{path.rstrip('/')}/{nam}'
+    p = Path(fullpath)
+    isfile = p.is_file()
+    if isfile:
+        mode = 'r+'
+        offset = (num_row - 1) * (row_len + 1)  # +1 - учет символа \n
+    else:
+        mode = 'w'
 
+    if len(text) <= row_len:
+        text = text.ljust(row_len)
+    else:
+        raise Exception(f'Длина строки больше ограничения\n{text}')
+    # print(len(text), text)
+    if not RW:  # если не перезаписываем строку, то добавим каретку переноса
+        text = text + '\n'
+
+    # with open(fullpath, mode, encoding='utf-8') as f:  # mode = f(isfile)
+    with open(fullpath, mode) as f:  # mode = f(isfile)
+        if isfile:
+            f.seek(offset)
+        f.write(text)
+    return None
+
+
+def read_row_in_file(path: str, nam: str, num_row: int,
+                     row_len: int = ROW_LENTS) -> str:
+    """ Читаем конкретную строку в файле
+     Должна быть реализована константная длина строк"""
+    # Нумерация строк файла начинается с 1 (как id в БД)
+    with open(f'{path.rstrip('/')}/{nam}', 'r') as f:
+        # with open(f'{path.rstrip('/')}/{nam}', 'r', encoding='utf-8') as f:
+        #      'r', encoding='utf-8') as f:
+        offset = (num_row - 1) * (row_len + 1)
+        f.seek(offset)  # +1 - учет символа \n
+        text = f.read(row_len)
+        text = text.strip(' \n')  # получаем строку без \n и ' '
+        # сначала хотел применить rstrip, но в начале строки откуда-то
+        # появляется \n, хотя я вроде правильно читаю (с начала строк)
+    return text
+
+
+def write_file(path: str, nam: str, text: str, mode: str = 'w+',
+               fix_len: bool = True, row_len: int = ROW_LENTS):
+    # print('Начинаем write_file:\n')
+    p = Path(path)
+    p.mkdir(exist_ok=True)  # создадим папку, если нету
+    if fix_len:
+        if len(text) <= row_len:
+            text = text.ljust(row_len)
+        else:
+            raise Exception(f'Длина строки больше ограничения\n{text}')
+    # with open(f'{path.rstrip('/')}/{nam}', mode, encoding='utf-8') as f:
+    with open(f'{path.rstrip('/')}/{nam}', mode) as f:
+        # with open(f'{path.rstrip('/')}/{nam}', mode) as f:
+        # print(lines)  # , type(lines))
+        f.write(text + '\n')

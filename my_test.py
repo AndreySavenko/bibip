@@ -1,8 +1,5 @@
 from datetime import datetime
 from decimal import Decimal
-
-import pytest
-
 from bibip_car_service import CarService
 from models import Car, CarFullInfo, CarStatus, Model, ModelSaleStats, Sale
 
